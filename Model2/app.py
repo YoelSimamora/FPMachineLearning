@@ -11,6 +11,8 @@ import os
 import traceback
 import base64
 from pathlib import Path
+import gdown
+from keras.models import load_model
 
 # --------------------------
 # Custom Font & Advanced Aesthetic CSS
@@ -682,19 +684,31 @@ st.markdown("""
 @st.cache_resource
 def load_ml_model():
     try:
-        # Gunakan path relatif untuk model
-        model_path = "C:/Users/lenovo/OneDrive/ITS/FP SML/Model2" 
-        class_indices_path = "C:/Users/lenovo/OneDrive/ITS/FP SML/Model2/class_indices.json"
+        # ID Google Drive untuk model.h5
+        model_id = "1Tri1t4GTFA4btVuzZtCJtwgJGbmq1-vK"  # ← ganti dengan ID asli dari Google Drive
+        model_file = "model.h5"
         
-        if not os.path.exists(model_path) or not os.path.exists(class_indices_path):
-            st.error("Model atau file class indices tidak ditemukan. Pastikan file ada di direktori yang benar.")
+        # Path lokal untuk class_indices.json
+        class_indices_path = "class_indices.json"  # bisa sesuaikan path-nya jika perlu
+
+        # Unduh model jika belum ada
+        if not os.path.exists(model_file):
+            model_url = f"https://drive.google.com/uc?id={model_id}"
+            gdown.download(model_url, model_file, quiet=False)
+
+        # Cek keberadaan class_indices.json
+        if not os.path.exists(class_indices_path):
+            st.error("File class_indices.json tidak ditemukan di direktori lokal.")
             return None, None
-            
-        model = load_model(model_path)
+
+        # Load model dan class indices
+        model = load_model(model_file)
         with open(class_indices_path, "r") as f:
             class_indices = json.load(f)
+        
         idx_to_label = {int(v): k for k, v in class_indices.items()}
         return model, idx_to_label
+
     except Exception as e:
         st.error(f"Error loading model: {str(e)}")
         st.error(traceback.format_exc())  
